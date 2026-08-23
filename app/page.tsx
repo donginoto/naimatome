@@ -22,8 +22,32 @@ async function writeClipboard(text: string) {
   }
 }
 
+/** 캔버스에 다시 그려서 EXIF·프롬프트 등 메타데이터를 제거한 파일로 바꾼다 */
+async function stripMetadata(file: File): Promise<File> {
+  // 애니메이션 GIF는 캔버스로 그리면 첫 프레임만 남으므로 원본을 그대로 둔다
+  if (file.type === "image/gif") return file;
+
+  const bitmap = await createImageBitmap(file);
+  const canvas = document.createElement("canvas");
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return file;
+  ctx.drawImage(bitmap, 0, 0);
+
+  const mime = file.type === "image/png" ? "image/png" : "image/jpeg";
+  const blob: Blob = await new Promise((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("변환 실패"))), mime, 0.95)
+  );
+
+  const ext = mime === "image/png" ? "png" : "jpg";
+  const name = file.name.replace(/\.[^.]+$/, "") + "." + ext;
+  return new File([blob], name, { type: mime });
+}
+
 /** 파일 하나를 artworks 저장소에 올리고 공개 주소를 돌려준다 */
 async function uploadOne(file: File) {
+  file = await stripMetadata(file);
   const ext = file.name.split(".").pop() || "png";
   const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
   const { error } = await supabase.storage
