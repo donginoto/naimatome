@@ -22,9 +22,7 @@ async function writeClipboard(text: string) {
   }
 }
 
-/** 캔버스에 다시 그려서 EXIF·프롬프트 등 메타데이터를 제거한 파일로 바꾼다 */
 async function stripMetadata(file: File): Promise<File> {
-  // 애니메이션 GIF는 캔버스로 그리면 첫 프레임만 남으므로 원본을 그대로 둔다
   if (file.type === "image/gif") return file;
 
   const bitmap = await createImageBitmap(file);
@@ -33,16 +31,18 @@ async function stripMetadata(file: File): Promise<File> {
   canvas.height = bitmap.height;
   const ctx = canvas.getContext("2d");
   if (!ctx) return file;
+
+  // JPEG는 투명(알파)이 없으므로 흰 배경을 먼저 깔아준다
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(bitmap, 0, 0);
 
-  const mime = file.type === "image/png" ? "image/png" : "image/jpeg";
   const blob: Blob = await new Promise((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("변환 실패"))), mime, 0.95)
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("변환 실패"))), "image/jpeg", 1.0)
   );
 
-  const ext = mime === "image/png" ? "png" : "jpg";
-  const name = file.name.replace(/\.[^.]+$/, "") + "." + ext;
-  return new File([blob], name, { type: mime });
+  const name = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+  return new File([blob], name, { type: "image/jpeg" });
 }
 
 /** 파일 하나를 artworks 저장소에 올리고 공개 주소를 돌려준다 */
