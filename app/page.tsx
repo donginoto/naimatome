@@ -429,7 +429,7 @@ function Sheet({
         </div>
 
         <div className="field">
-          <label htmlFor="nt">메모 · ```로 감싸면 복사 버튼 있는 코드블럭이 됨</label>
+          <label htmlFor="nt">메모</label>
           <textarea id="nt" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
 
