@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase, type Artist } from "@/lib/supabase";
-import { downloadExport } from "@/lib/export";
 import type { Session } from "@supabase/supabase-js";
 
 /** 복사되는 문자열 — 프롬프트에 이어붙이기 좋게 뒤에 쉼표와 공백을 둔다 */
@@ -597,15 +596,6 @@ export default function Page() {
           placeholder="아티스트 찾기"
           onChange={(e) => setQuery(e.target.value)}
         />
-        {items.length > 0 && (
-          <button
-            className="btn"
-            onClick={() => downloadExport(items)}
-            title="지금 내용을 HTML 파일 하나로 내려받습니다"
-          >
-            사본 저장
-          </button>
-        )}
         {canEdit && (
           <button className="btn btn-solid" onClick={() => setDraft({})}>
             추가
